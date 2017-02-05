@@ -1,89 +1,82 @@
 (function() {
-    "use strict"
+        "use strict"
 
-    angular.module('shop', [])
-    .controller('IntroController', function($scope) {
-        $scope.inputModel = {
-            value: ''
-        };
-        $scope.cbox = true;
-        $scope.itemsList = [
-            "Workshopy WarsawJS",
-            "są najlepszym sposobem",
-            "na poznanie świetnych ludzi",
-            "i nauczenie się nowych technologii."
-        ];
-
-        $scope.testObj = {hello: "Hello"};
-        $scope.testText = "World!";
-        $scope.callback = function(content) {
-            alert(content);
-        };
-    })
-    // .controller('IntroController', ['$scope', function($scope) {
-    //     $scope.inputModel = {
-    //         value: ''
-    //     };
-    // $scope.cbox = true;
-    //     $scope.itemsList = [
-    //         "Workshopy WarsawJS",
-    //         "są najlepszym sposobem",
-    //         "na poznanie świetnych ludzi",
-    //         "i nauczenie się nowych technologii."
-    //     ];
-    //     $scope.callback = function(content) {
-    //         alert(content);
-    //     };
-
-        // $scope.testObj = {hello: "Hello"};
-        // $scope.testText = "World!";
-        // $scope.callback = function(content) {
-        //     alert(content);
-        // };
-    // }])
-    // .controller('IntroController', IntroController)
-    // IntroController.$inject = ['$scope'];
-    // function IntroController($scope) {
-    //     $scope.inputModel = {
-    //         value: ''
-    //     };
-    // $scope.cbox = true;
-    //     $scope.itemsList = [
-    //         "Workshopy WarsawJS",
-    //         "są najlepszym sposobem",
-    //         "na poznanie świetnych ludzi",
-    //         "i nauczenie się nowych technologii."
-    //     ];
-    //     $scope.callback = function(content) {
-    //         alert(content);
-    //     };
-    //     $scope.testObj = {hello: "Hello"};
-    //     $scope.testText = "World!";
-    //     $scope.callback = function(content) {
-    //         alert(content);
-    //     };
-    // }
-    angular.module('shop')
-    .controller('introDirCtrl', introDirCtrl)
-    .directive('introDirective', function() {
-        return {
-            template: `
-                <div> 
-                    <span>Moja własna dyrektywa: {{$ctrl.objProp.hello}}, {{$ctrl.textProp}}</span> 
-                    <button ng-click="$ctrl.fnProp({content: $ctrl.greeting})">Alert!</button>
-                </div>`,
-            scope: {
-                objProp: '=',
-                textProp: '@',
-                fnProp: '&'
-            },
-            bindToController: true,
-            controller: "introDirCtrl as $ctrl"
+        class ShopComponent {
+            constructor() {
+                this.template = `
+                <cart-items-list-component></cart-items-list-component>
+                <h1>shop</h1>
+                <product-list-component></product-list-component>`
+            }
         }
-    })
-    function introDirCtrl($timeout) {
-        $timeout(() => {
-            this.greeting = `${this.objProp.hello} ${this.textProp}`;
-        }, 0);
+
+        class ProductListComponent {
+            constructor() {
+                this.controller = function(productsService){
+                    this.products = productsService.get();
+                }
+                this.template =
+                    `<div>products: </div>
+                    <div class="container">
+                        <div class="row">
+                            <product-component ng-repeat="product in $ctrl.products.list track by product.id" product="product" class="col-6"></product-component>
+                        </div>
+                                      
+                    </div>`;
+
+            }
+        }
+
+        class ProductComponent {
+            constructor() {
+                this.bindings = { product: '<' },
+                this.template = `
+                    <h4>id: {{$ctrl.product.id}}</h4>
+                    <h1>name: {{$ctrl.product.name}}</h1>
+                    <h4>desc: {{$ctrl.product.description}}</h4>
+                    <img ng-src={{$ctrl.product.image}}>
+                    <button ng-click="$ctrl.addItem()">dodaj do koszyka</button>`,
+                this.controller = function (cartService){
+                    this.addItem = (item) => {
+                        cartService.addItem(item);
+                    }
+                }
+            }
+        }
+
+        class CartItemsListComponent {
+            constructor() {
+                this.controller = function(cartService){
+                    this.cartItems = cartService.getItems();
+                    this.removeCartItem = cartService.removeCartItem();
+                }
+                this.template =
+                    `<div>cart items: </div>
+                    <div class="container">
+                        <div class="row">
+                            <cart-item-component ng-repeat="cartItems in $ctrl.cartItems.list track by cartItem.id" cartItem="cartItem" ></cart-item-component>
+                        </div>
+                                      
+                    </div>`;
+
+            }
+        }
+
+        class CartItemComponent {
+            constructor() {
+                this.bindings = { cartItem: '<'};
+                this.template = `
+                    <h4>id: {{$ctrl.product.id}}</h4>
+                    <h1>name: {{$ctrl.product.name}}</h1>
+                   <button ng-click="$ctrl.cartService.removeItem()">usun z koszyka</button>`
+            }
+        }
+        angular.module('shop')
+            .component('shop', new ShopComponent())
+            .component('productListComponent', new ProductListComponent())
+            .component('productComponent', new ProductComponent())
+            .component('cartItemComponent', new CartItemComponent())
+            .component('cartItemsListComponent', new CartItemsListComponent())
     }
-})();
+)();
+
